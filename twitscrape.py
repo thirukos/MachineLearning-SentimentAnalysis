@@ -18,6 +18,7 @@ for location in locations.keys():
     scraped_tweets = sntwit.TwitterSearchScraper(search_term_query).get_items()
     sliced_scraped_tweets = itertools.islice(scraped_tweets, 1000)
     print(sliced_scraped_tweets)
-    pd.concat(tweets, pd.DataFrame(sliced_scraped_tweets))
+    tweets = pd.concat(tweets, pd.DataFrame(sliced_scraped_tweets))
 
-print(tweets.head())
+with open('tweets.csv', 'w+') as file:
+    tweets.to_csv(file, sep=',')
