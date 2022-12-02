@@ -1,12 +1,14 @@
 import pandas as pd
 import snscrape.modules.twitter as sntwit
 import itertools
-import matplotlib as plt
+import matplotlib.pyplot as plt
+import ast
 
 from wordcloud import WordCloud, STOPWORDS
 
-search_terms = ['queen', 'elizabeth', 'colonialism', 'rip', 'royal family', 'death', 'irish',
+initial_search_terms = ['queen', 'elizabeth', 'colonialism', 'rip', 'royal family', 'death', 'irish',
                 'britain', 'uk']
+
 exclude_terms = ['-mermaid', 'minaj', 'latifah']
 tweet_fields = ['date', 'content', 'lang', ]
 locations = {'southasia': {'india': ['delhi', 'mumbai', 'chennai', 'bangalore', 'kolkata'],
@@ -23,21 +25,40 @@ locations = {'southasia': {'india': ['delhi', 'mumbai', 'chennai', 'bangalore', 
 
 exclude_query = ' OR -'.join(term for term in exclude_terms)
 
+def get_all_tweets():
+    dates = {'1':'since:2022-09-08 until:2022-09-09', '2':'since:2022-09-09 until:2022-09-10', '3':'since:2022-09-10 until:2022-09-11'}
+    # Using a word cloud to select popular words in timeframe
+    for date in dates.keys():
+        search_query = f'#queenelizabeth {dates[date]}'
+        print(search_query)
+        s_tweets = sntwit.TwitterSearchScraper(search_query).get_items()
+        sliced_s_tweets = itertools.islice(s_tweets, 5000)
+        all_tweets = pd.DataFrame(sliced_s_tweets)[['content']]
+        all_tweets.to_csv(f'data_{date}.csv', sep=',')
+
+def generate_wordcloud():
+    processed = pd.DataFrame()
+    for i in range(1,4):
+        inp = pd.read_csv(f'data_p_{i}.csv')
+        processed = pd.concat([processed, inp])
+
+    print(processed.head())
+    stop_words = ['queenelizabeth', 'queenelizabethii', 'queen', 'elizabeth'] + list(STOPWORDS)
+    words = []
+    for line in processed['content'].tolist():
+        words.extend([word for word in ast.literal_eval(line)])
+    wordcloud = WordCloud(stopwords = stop_words, min_word_length = 3, max_words = 40, background_color="white").generate(' '.join(words))
+    plt.figure(figsize = (8, 8), facecolor = None)
+    plt.imshow(wordcloud)
+    plt.show()
+
 
 tweets = pd.DataFrame()
 
-# # Using a word cloud to select popular words in timeframe
-# search_query = 'since:2022-09-08 until:2022-09-10'
-# scraped_tweets = sntwit.TwitterSearchScraper(search_query).get_items()
-# sliced_scraped_tweets = itertools.islice(scraped_tweets, 60000)
-# for tweet in scraped_tweets:
-#     tweet = str(tweet)
-#     tokens = tweet.split()
-# wordcloud = WordCloud(stopwords = STOPWORDS, background_color="white").generate(sliced_scraped_tweets)
-# plt.imshow(wordcloud)
-# plt.show()
+# generate_wordcloud()
 
-
+search_terms = ['"rest in peace"', 'kingcharles', 'rip', 'abolishthemonarchy', '"royal family"', 
+                'england', '"reina isabel"', 'death', 'majesty']
 for region in locations:
     for country in locations[region]:
         city_list = locations[region][country]
