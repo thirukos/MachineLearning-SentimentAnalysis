@@ -3,6 +3,7 @@ import snscrape.modules.twitter as sntwit
 import itertools
 import matplotlib.pyplot as plt
 import ast
+import numpy as np
 
 from wordcloud import WordCloud, STOPWORDS
 
@@ -68,9 +69,13 @@ for region in locations:
             search_term_query = f'({" OR ".join(term for term in search_terms)}) near:{city} within:10km since:2022-09-08 until:2022-09-10 lang:en'
             print(search_term_query)
             scraped_tweets = sntwit.TwitterSearchScraper(search_term_query).get_items()
-            sliced_scraped_tweets = itertools.islice(scraped_tweets, 1000)
+            sliced_scraped_tweets = itertools.islice(scraped_tweets, 1000)  
             results = pd.DataFrame(sliced_scraped_tweets)[['date', 'content']]
-            print(results.head())
+            print(np.where(pd.isnull(results)))
+            for index, row in results.iterrows():
+                if '\n' in row['content']:
+                    results.at[index, 'content'] = str(row['content']).replace('\n', '')
+            print(np.where(pd.isnull(results)))
             tweets = pd.concat([tweets, results])
             # tweets = pd.DataFrame(sliced_scraped_tweets)[['date', 'content']]
         print(tweets.head())
